@@ -40,9 +40,8 @@ def arg_parse():
     args = parser.parse_args()
     sys.argv = sys.argv[:1]
 
-
+    models = [f for f in os.listdir(os.getenv('weight_root')) if f.endswith('.pth') or f.endswith('.pt')]
     if args.list_models:
-        models = [f for f in os.listdir(os.getenv('weight_root')) if f.endswith('.pth') or f.endswith('.pt')]
         if len(models) >= 1:
             print("Installed weights:")
             for i in models:
@@ -51,6 +50,14 @@ def arg_parse():
         else:
             print("No weights installed.")
         sys.exit(0)
+
+    if args.model is None:
+        if len(models) >= 1:
+            print(f"warning: no model specified, using {models[0]}", file=sys.stderr)
+            args.model = models[0]
+        else:
+            print("error: model not installed", file=sys.stderr)
+            sys.exit(1)
     if args.input is None:
         print("error: audio file argument required", file=sys.stderr)
         sys.exit(1)
