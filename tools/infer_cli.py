@@ -54,7 +54,7 @@ def arg_parse():
     if args.model is None:
         if len(models) >= 1:
             print(f"warning: no model specified, using {models[0]}", file=sys.stderr)
-            args.model = models[0]
+            args.model = os.path.splitext(os.path.basename(models[0]))[0]
         else:
             print("error: model not installed", file=sys.stderr)
             sys.exit(1)
