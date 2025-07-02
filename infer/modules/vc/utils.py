@@ -22,7 +22,7 @@ def get_index_path_from_model(sid):
 
 def load_hubert(config):
     models, _, _ = checkpoint_utils.load_model_ensemble_and_task(
-        ["models/hubert/hubert_base.pt"],
+        [f"{os.getenv('model_root')}/hubert/hubert_base.pt"],
         suffix="",
     )
     hubert_model = models[0]

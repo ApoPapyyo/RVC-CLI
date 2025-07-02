@@ -2,13 +2,17 @@ import argparse
 import os
 import sys
 
-root = os.path.dirname(os.path.dirname(sys.argv[0]))
+root = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
 sys.path.append(root)
-from dotenv import load_dotenv
-from scipy.io import wavfile
+os.environ['rvc_root'] = root
+def set_env(args):
+    os.environ['model_root'] = os.path.join(os.getenv('rvc_root'), 'models')
+    os.environ['weight_root'] = os.path.join(os.getenv('model_root'), 'weights')
+    index = str(args.model)+'_index'
+    os.environ['index_root'] = os.path.join(os.getenv('weight_root'), args.model + '_index')
+    os.environ['config_root'] = os.path.join(os.getenv('rvc_root'), 'configs')
+    os.environ['rmvpe_root'] = os.path.join(os.getenv('model_root'), 'rmvpe')
 
-from configs.config import Config
-from infer.modules.vc.modules import VC
 
 ####
 # USAGE
@@ -19,12 +23,11 @@ from infer.modules.vc.modules import VC
 def arg_parse():
     global root
     parser = argparse.ArgumentParser()
-    parser.add_argument("workdir", type=str)
     parser.add_argument("input", type=str, help="input path")
     parser.add_argument("-m", "--model", type=str, help="model name / store in models/weight_root")
     parser.add_argument("-t", "--transpose", type=int, default=0)
     parser.add_argument("--index", type=str, help="index path")
-    parser.add_argument("-f", "--f0method", type=str, default="rmvpe", help="harvest or pm")
+    parser.add_argument("-f", "--f0-method", type=str, default="rmvpe", help="pm, harvest, crepe, or rmvpe. default: rmvpe")
     parser.add_argument("--output", type=str, help="output path", default='')
     parser.add_argument("-r", "--index_rate", type=float, default=0.66, help="index rate")
     parser.add_argument("-d", "--device", type=str, help="device")
@@ -36,37 +39,35 @@ def arg_parse():
     parser.add_argument("--list-models", action='store_true', help='Show installed models')
 
     args = parser.parse_args()
-    os.chdir(args.workdir)
     args.input = os.path.abspath(args.input)
-    os.chdir(root)
     sys.argv = sys.argv[:1]
     if args.output == '' and args.input != '':
           dir = os.path.dirname(args.input)
           base = os.path.basename(args.input)
           basename, _ = os.path.splitext(base)
-          args.output = dir + '/' + basename + '_by_' + args.model + '.wav'
+          args.output = os.path.join(dir, f'{basename}_by_{args.model}.wav')
 
     return args
-
-
 def main():
-    load_dotenv()
     args = arg_parse()
+    set_env(args)
+    from dotenv import load_dotenv
+    from scipy.io import wavfile
+    from configs.config import Config
+    from infer.modules.vc.modules import VC
+    load_dotenv()
     config = Config()
     config.device = args.device if args.device else config.device
     config.is_half = args.half if args.half else config.is_half
     vc = VC(config)
-    sid = str(args.model)+'.pth'
-    index = str(args.model)+'_index'
-    os.environ['index_root'] = f'{os.getenv("weight_root")}/{index}'
-    vc.get_vc(sid)
-    os.environ['rmvpe_root'] = f'{os.path.dirname(os.getenv("weight_root"))}/rmvpe'
+    weight_path = f"{args.model}.pth"
+    vc.get_vc(weight_path)
     _, wav_output = vc.vc_single(
         0,
         args.input,
         args.transpose,
         None,
-        args.f0method,
+        args.f0_method,
         args.index,
         None,
         args.index_rate,
