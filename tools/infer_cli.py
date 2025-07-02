@@ -26,7 +26,7 @@ def arg_parse():
     parser.add_argument("-t", "--transpose", type=int, default=0)
     parser.add_argument("--index", type=str, help="index path")
     parser.add_argument("-f", "--f0-method", type=str, default="rmvpe", help="pm, harvest, crepe, or rmvpe. default: rmvpe")
-    parser.add_argument("--output", type=str, help="output path", default='')
+    parser.add_argument("-o", "--output", type=str, help="output path", default='')
     parser.add_argument("-r", "--index_rate", type=float, default=0.66, help="index rate")
     parser.add_argument("-d", "--device", type=str, help="device")
     parser.add_argument("--half", action='store_true', help="use half -> True")
