@@ -22,6 +22,7 @@ check_dir "./models/pretrained"
 check_dir "./models/pretrained_v2"
 check_dir "./models/uvr5_weights"
 check_dir "./models/uvr5_weights/onnx_dereverb_By_FoxJoy"
+check_dir "./models/weights"
 
 echo "dir check finished."
 
