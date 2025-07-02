@@ -55,9 +55,10 @@ def arg_parse():
         if len(models) >= 1:
             print(f"warning: no model specified, using {models[0]}", file=sys.stderr)
             args.model = os.path.splitext(os.path.basename(models[0]))[0]
-        else:
-            print("error: model not installed", file=sys.stderr)
-            sys.exit(1)
+    
+    if len(models) == 0:
+        print("error: model not installed", file=sys.stderr)
+        sys.exit(1)
     if args.input is None:
         print("error: audio file argument required", file=sys.stderr)
         sys.exit(1)
