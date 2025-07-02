@@ -5,11 +5,9 @@ import sys
 root = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
 sys.path.append(root)
 os.environ['rvc_root'] = root
-def set_env(args):
+def set_env():
     os.environ['model_root'] = os.path.join(os.getenv('rvc_root'), 'models')
     os.environ['weight_root'] = os.path.join(os.getenv('model_root'), 'weights')
-    index = str(args.model)+'_index'
-    os.environ['index_root'] = os.path.join(os.getenv('weight_root'), args.model + '_index')
     os.environ['config_root'] = os.path.join(os.getenv('rvc_root'), 'configs')
     os.environ['rmvpe_root'] = os.path.join(os.getenv('model_root'), 'rmvpe')
 
@@ -23,7 +21,7 @@ def set_env(args):
 def arg_parse():
     global root
     parser = argparse.ArgumentParser()
-    parser.add_argument("input", type=str, help="input path")
+    parser.add_argument("input", nargs='?', type=str, help="input path")
     parser.add_argument("-m", "--model", type=str, help="model name / store in models/weight_root")
     parser.add_argument("-t", "--transpose", type=int, default=0)
     parser.add_argument("--index", type=str, help="index path")
@@ -36,21 +34,38 @@ def arg_parse():
     parser.add_argument("--resample_sr", type=int, default=0, help="resample sr")
     parser.add_argument("--rms_mix_rate", type=float, default=1, help="rms mix rate")
     parser.add_argument("--protect", type=float, default=0.33, help="protect")
-    parser.add_argument("--list-models", action='store_true', help='Show installed models')
-
+    parser.add_argument("-l", "--list-models", action='store_true', help='Show installed models')
+    if len(sys.argv) == 1:
+        sys.argv.append('--help')
     args = parser.parse_args()
-    args.input = os.path.abspath(args.input)
     sys.argv = sys.argv[:1]
+
+
+    if args.list_models:
+        models = [f for f in os.listdir(os.getenv('weight_root')) if f.endswith('.pth') or f.endswith('.pt')]
+        if len(models) >= 1:
+            print("Installed weights:")
+            for i in models:
+                b = os.path.splitext(os.path.basename(i))[0]
+                print(f"- {b}")
+        else:
+            print("No weights installed.")
+        sys.exit(0)
+    if args.input is None:
+        print("error: audio file argument required", file=sys.stderr)
+        sys.exit(1)
+    args.input = os.path.abspath(args.input)
     if args.output == '' and args.input != '':
           dir = os.path.dirname(args.input)
           base = os.path.basename(args.input)
           basename, _ = os.path.splitext(base)
           args.output = os.path.join(dir, f'{basename}_by_{args.model}.wav')
+    os.environ['index_root'] = os.path.join(os.getenv('weight_root'), args.model + '_index')
 
     return args
 def main():
+    set_env()
     args = arg_parse()
-    set_env(args)
     from dotenv import load_dotenv
     from scipy.io import wavfile
     from configs.config import Config
