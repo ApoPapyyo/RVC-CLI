@@ -10,7 +10,11 @@ def set_env():
     os.environ['weight_root'] = os.path.join(os.getenv('model_root'), 'weights')
     os.environ['config_root'] = os.path.join(os.getenv('rvc_root'), 'configs')
     os.environ['rmvpe_root'] = os.path.join(os.getenv('model_root'), 'rmvpe')
-
+def error(mes):
+    print(f"error: {mes}", file=sys.stderr)
+    sys.exit(1)
+def warning(mes):
+    print(f"warning: {mes}", file=sys.stderr)
 
 ####
 # USAGE
@@ -40,28 +44,29 @@ def arg_parse():
     args = parser.parse_args()
     sys.argv = sys.argv[:1]
 
-    models = [f for f in os.listdir(os.getenv('weight_root')) if f.endswith('.pth') or f.endswith('.pt')]
+    models = [os.path.splitext(os.path.basename(f))[0] for f in os.listdir(os.getenv('weight_root')) if f.endswith('.pth') or f.endswith('.pt')]
     if args.list_models:
         if len(models) >= 1:
             print("Installed weights:")
             for i in models:
-                b = os.path.splitext(os.path.basename(i))[0]
-                print(f"- {b}")
+                print(f"- {i}")
         else:
             print("No weights installed.")
         sys.exit(0)
 
     if args.model is None:
         if len(models) >= 1:
-            print(f"warning: no model specified, using {models[0]}", file=sys.stderr)
-            args.model = os.path.splitext(os.path.basename(models[0]))[0]
+            warning(f"no model specified, using {models[0]}")
+            args.model = models[0]
+    if args.model not in models:
+        error(f"{args.model} is not installed")
     
     if len(models) == 0:
-        print("error: model not installed", file=sys.stderr)
-        sys.exit(1)
+        error("model not installed", )
     if args.input is None:
-        print("error: audio file argument required", file=sys.stderr)
-        sys.exit(1)
+        error("audio file argument required")
+    if not os.path.exists(args.input):
+        error(f"{args.input}: no such file or directory")
     args.input = os.path.abspath(args.input)
     if args.output == '' and args.input != '':
           dir = os.path.dirname(args.input)
