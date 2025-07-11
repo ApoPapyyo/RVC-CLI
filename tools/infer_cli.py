@@ -53,21 +53,25 @@ def arg_parse():
         else:
             print("No weights installed.")
         sys.exit(0)
-
-    if args.model is None:
-        if len(models) >= 1:
-            warning(f"no model specified, using {models[0]}")
-            args.model = models[0]
-    if args.model not in models:
-        error(f"{args.model} is not installed")
-    
     if len(models) == 0:
-        error("model not installed", )
+        error("model not installed")
+    
     if args.input is None:
         error("audio file argument required")
     if not os.path.exists(args.input):
         error(f"{args.input}: no such file or directory")
     args.input = os.path.abspath(args.input)
+
+    if args.f0_method not in ('pm', 'harvest', 'crepe', 'rmvpe'):
+        error(f"{args.f0_method}: unsupported method")
+
+    if args.model is None:
+        if len(models) >= 1:
+            warning(f"no model specified, using {models[0]}")
+            args.model = models[0]
+    elif args.model not in models:
+        error(f"{args.model} is not installed")
+    
     if args.output == '' and args.input != '':
           dir = os.path.dirname(args.input)
           base = os.path.basename(args.input)
