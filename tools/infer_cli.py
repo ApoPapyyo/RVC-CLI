@@ -40,12 +40,12 @@ def arg_parse():
     parser.add_argument("-f", "--f0-method", type=str, default="rmvpe", help="pm, harvest, crepe, or rmvpe. default: rmvpe")
     parser.add_argument("-F", "--f0-file", type=str)
     parser.add_argument("-o", "--output", type=str, help="output path", default='')
-    parser.add_argument("-r", "--index_rate", type=float, default=0.66, help="index rate")
+    parser.add_argument("-r", "--index-rate", type=float, default=0.66, help="index rate")
     parser.add_argument("-d", "--device", type=str, help="device")
     parser.add_argument("--half", action='store_true', help="use half -> True")
-    parser.add_argument("--filter_radius", type=int, default=3, help="filter radius")
-    parser.add_argument("--resample_sr", type=int, default=0, help="resample sr")
-    parser.add_argument("--rms_mix_rate", type=float, default=1, help="rms mix rate")
+    parser.add_argument("--filter-radius", type=int, default=3, help="filter radius")
+    parser.add_argument("--resample-sr", type=int, default=0, help="resample sr")
+    parser.add_argument("--rms_mix-rate", type=float, default=1, help="rms mix rate")
     parser.add_argument("--protect", type=float, default=0.33, help="protect")
     parser.add_argument("-l", "--list-models", action='store_true', help='Show installed models')
     parser.add_argument("--dry-run", action='store_true', help='Do only argument check')
@@ -79,13 +79,12 @@ def arg_parse():
     if args.f0_method not in ('pm', 'harvest', 'crepe', 'rmvpe'):
         error(f"{args.f0_method}: unsupported method")
 
-    if not args.extract_f0:
-        if args.model is None:
-            if len(models) >= 1:
-                warning(f"no model specified, using {models[0]}")
-                args.model = models[0]
-        elif args.model not in models:
-            error(f"{args.model} is not installed")
+    if args.model is None:
+        if len(models) >= 1:
+            if not args.extract_f0: warning(f"no model specified, using {models[0]}")
+            args.model = models[0]
+    elif args.model not in models:
+        error(f"{args.model} is not installed")
     
     if args.output == '' and args.input != '':
         dir = os.path.dirname(args.input)
@@ -95,15 +94,14 @@ def arg_parse():
             args.output = os.path.join(dir, f'{basename}_by_{args.model}.wav')
         else:
             args.output = os.path.join(dir, f'{basename}_f0.csv')
-        
+    
     os.environ['index_root'] = os.path.join(os.getenv('weight_root'), args.model + '_index')
-
+    if args.dry_run:
+        sys.exit(0)
     return args
 def main():
     set_env()
     args = arg_parse()
-    if args.dry_run:
-        sys.exit(0)
     from dotenv import load_dotenv
     from scipy.io import wavfile
     from configs.config import Config
