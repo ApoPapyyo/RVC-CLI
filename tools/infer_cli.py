@@ -21,12 +21,20 @@ def warning(mes):
 #
 # In your Terminal or CMD or whatever
 
+def show_models(models):
+    if len(models) >= 1:
+        print("Installed weights:")
+        for i in models:
+            print(f"- {i}")
+    else:
+        print("No weights installed.")
+    sys.exit(0)
 
 def arg_parse():
     global root
     parser = argparse.ArgumentParser()
     parser.add_argument("input", nargs='?', type=str, help="input path")
-    parser.add_argument("-m", "--model", type=str, help="model name / store in models/weight_root")
+    parser.add_argument("-m", "--model", type=str, help=f"model name / store in {os.getenv('weight_root')}")
     parser.add_argument("-t", "--transpose", type=int, default=0)
     parser.add_argument("--index", type=str, help="index path")
     parser.add_argument("-f", "--f0-method", type=str, default="rmvpe", help="pm, harvest, crepe, or rmvpe. default: rmvpe")
@@ -39,20 +47,17 @@ def arg_parse():
     parser.add_argument("--rms_mix_rate", type=float, default=1, help="rms mix rate")
     parser.add_argument("--protect", type=float, default=0.33, help="protect")
     parser.add_argument("-l", "--list-models", action='store_true', help='Show installed models')
+    parser.add_argument("--dry-run", action='store_true', help='Do nothing')
     if len(sys.argv) == 1:
         sys.argv.append('--help')
     args = parser.parse_args()
     sys.argv = sys.argv[:1]
 
     models = [os.path.splitext(os.path.basename(f))[0] for f in os.listdir(os.getenv('weight_root')) if f.endswith('.pth') or f.endswith('.pt')]
+
     if args.list_models:
-        if len(models) >= 1:
-            print("Installed weights:")
-            for i in models:
-                print(f"- {i}")
-        else:
-            print("No weights installed.")
-        sys.exit(0)
+        show_models(models)
+
     if len(models) == 0:
         error("model not installed")
     
@@ -83,6 +88,8 @@ def arg_parse():
 def main():
     set_env()
     args = arg_parse()
+    if args.dry_run:
+        sys.exit(0)
     from dotenv import load_dotenv
     from scipy.io import wavfile
     from configs.config import Config
