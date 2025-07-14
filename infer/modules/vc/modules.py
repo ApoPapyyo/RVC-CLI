@@ -157,6 +157,7 @@ class VC:
         resample_sr,
         rms_mix_rate,
         protect,
+        f0_extract=False
     ):
         if input_audio_path is None:
             return "You need to upload an audio", None
@@ -204,7 +205,10 @@ class VC:
                 self.version,
                 protect,
                 f0_file,
+                f0_extract
             )
+            if f0_extract:
+                return audio_output
             if self.samplerate != resample_sr >= 16000:
                 samplerate = resample_sr
             else:

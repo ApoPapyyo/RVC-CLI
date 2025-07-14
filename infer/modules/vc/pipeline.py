@@ -300,6 +300,7 @@ class Pipeline(object):
         version,
         protect,
         f0_file=None,
+        f0_extract=False
     ):
         if (
             file_index != ""
@@ -364,6 +365,8 @@ class Pipeline(object):
             )
             pitch = pitch[:p_len]
             pitchf = pitchf[:p_len]
+            if f0_extract:
+                return pitchf.tolist()
             if "mps" not in str(self.device) or "xpu" not in str(self.device):
                 pitchf = pitchf.astype(np.float32)
             pitch = torch.tensor(pitch, device=self.device).unsqueeze(0).long()

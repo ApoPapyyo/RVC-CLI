@@ -38,6 +38,7 @@ def arg_parse():
     parser.add_argument("-t", "--transpose", type=int, default=0)
     parser.add_argument("--index", type=str, help="index path")
     parser.add_argument("-f", "--f0-method", type=str, default="rmvpe", help="pm, harvest, crepe, or rmvpe. default: rmvpe")
+    parser.add_argument("-F", "--f0-file", type=str)
     parser.add_argument("-o", "--output", type=str, help="output path", default='')
     parser.add_argument("-r", "--index_rate", type=float, default=0.66, help="index rate")
     parser.add_argument("-d", "--device", type=str, help="device")
@@ -47,7 +48,8 @@ def arg_parse():
     parser.add_argument("--rms_mix_rate", type=float, default=1, help="rms mix rate")
     parser.add_argument("--protect", type=float, default=0.33, help="protect")
     parser.add_argument("-l", "--list-models", action='store_true', help='Show installed models')
-    parser.add_argument("--dry-run", action='store_true', help='Do nothing')
+    parser.add_argument("--dry-run", action='store_true', help='Do only argument check')
+    parser.add_argument("-e", "--extract-f0", action='store_true', help='F0 extract mode')
     if len(sys.argv) == 1:
         sys.argv.append('--help')
     args = parser.parse_args()
@@ -66,6 +68,13 @@ def arg_parse():
     if not os.path.exists(args.input):
         error(f"{args.input}: no such file or directory")
     args.input = os.path.abspath(args.input)
+    
+    class f0_file_t:
+        def __init__(self, name):
+            self.name = name
+    if args.f0_file is not None:
+        args.f0_file = os.path.abspath(args.f0_file)
+        args.f0_file = f0_file_t(args.f0_file)
 
     if args.f0_method not in ('pm', 'harvest', 'crepe', 'rmvpe'):
         error(f"{args.f0_method}: unsupported method")
@@ -78,10 +87,14 @@ def arg_parse():
         error(f"{args.model} is not installed")
     
     if args.output == '' and args.input != '':
-          dir = os.path.dirname(args.input)
-          base = os.path.basename(args.input)
-          basename, _ = os.path.splitext(base)
-          args.output = os.path.join(dir, f'{basename}_by_{args.model}.wav')
+        dir = os.path.dirname(args.input)
+        base = os.path.basename(args.input)
+        basename, _ = os.path.splitext(base)
+        if not args.extract_f0:
+            args.output = os.path.join(dir, f'{basename}_by_{args.model}.wav')
+        else:
+            args.output = os.path.join(dir, f'{basename}_f0.txt')
+        
     os.environ['index_root'] = os.path.join(os.getenv('weight_root'), args.model + '_index')
 
     return args
@@ -100,22 +113,48 @@ def main():
     config.is_half = args.half if args.half else config.is_half
     vc = VC(config)
     weight_path = f"{args.model}.pth"
-    vc.get_vc(weight_path)
-    _, wav_output = vc.vc_single(
-        0,
-        args.input,
-        args.transpose,
-        None,
-        args.f0_method,
-        args.index,
-        None,
-        args.index_rate,
-        args.filter_radius,
-        args.resample_sr,
-        args.rms_mix_rate,
-        args.protect,
-    )
-    wavfile.write(args.output, wav_output[0], wav_output[1])
+    if not args.extract_f0:
+        vc.get_vc(weight_path)
+        _, wav_output = vc.vc_single(
+            0,
+            args.input,
+            args.transpose,
+            args.f0_file,
+            args.f0_method,
+            args.index,
+            None,
+            args.index_rate,
+            args.filter_radius,
+            args.resample_sr,
+            args.rms_mix_rate,
+            args.protect,
+        )
+        wavfile.write(args.output, wav_output[0], wav_output[1])
+    else:
+        vc.get_vc(weight_path)
+        f0_output = vc.vc_single(
+            0,
+            args.input,
+            args.transpose,
+            args.f0_file,
+            args.f0_method,
+            args.index,
+            None,
+            args.index_rate,
+            args.filter_radius,
+            args.resample_sr,
+            args.rms_mix_rate,
+            args.protect,
+            True
+        )
+        with open(args.output, 'w') as f:
+            j=-100
+            for i in f0_output:
+                if j >= 0:
+                    f.write(','.join([str(j/100.0), str(i)]))
+                    f.write('\n')
+                j+=1
+
 
 
 if __name__ == "__main__":
