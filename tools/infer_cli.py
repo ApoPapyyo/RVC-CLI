@@ -79,12 +79,13 @@ def arg_parse():
     if args.f0_method not in ('pm', 'harvest', 'crepe', 'rmvpe'):
         error(f"{args.f0_method}: unsupported method")
 
-    if args.model is None:
-        if len(models) >= 1:
-            warning(f"no model specified, using {models[0]}")
-            args.model = models[0]
-    elif args.model not in models:
-        error(f"{args.model} is not installed")
+    if not args.extract_f0:
+        if args.model is None:
+            if len(models) >= 1:
+                warning(f"no model specified, using {models[0]}")
+                args.model = models[0]
+        elif args.model not in models:
+            error(f"{args.model} is not installed")
     
     if args.output == '' and args.input != '':
         dir = os.path.dirname(args.input)
@@ -113,46 +114,30 @@ def main():
     config.is_half = args.half if args.half else config.is_half
     vc = VC(config)
     weight_path = f"{args.model}.pth"
+    vc.get_vc(weight_path)
+    d, wav_output = vc.vc_single(
+        0,
+        args.input,
+        args.transpose,
+        args.f0_file,
+        args.f0_method,
+        args.index,
+        None,
+        args.index_rate,
+        args.filter_radius,
+        args.resample_sr,
+        args.rms_mix_rate,
+        args.protect,
+        args.extract_f0
+    )
     if not args.extract_f0:
-        vc.get_vc(weight_path)
-        _, wav_output = vc.vc_single(
-            0,
-            args.input,
-            args.transpose,
-            args.f0_file,
-            args.f0_method,
-            args.index,
-            None,
-            args.index_rate,
-            args.filter_radius,
-            args.resample_sr,
-            args.rms_mix_rate,
-            args.protect,
-        )
         wavfile.write(args.output, wav_output[0], wav_output[1])
     else:
-        vc.get_vc(weight_path)
-        f0_output = vc.vc_single(
-            0,
-            args.input,
-            args.transpose,
-            args.f0_file,
-            args.f0_method,
-            args.index,
-            None,
-            args.index_rate,
-            args.filter_radius,
-            args.resample_sr,
-            args.rms_mix_rate,
-            args.protect,
-            True
-        )
         with open(args.output, 'w') as f:
-            j=-100
-            for i in f0_output:
-                if j >= 0:
-                    f.write(','.join([str(j/100.0), str(i)]))
-                    f.write('\n')
+            j=0
+            for i in d[100:]:
+                f.write(','.join([str(j/100.0), str(i)]))
+                f.write('\n')
                 j+=1
 
 
