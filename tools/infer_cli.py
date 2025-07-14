@@ -94,7 +94,7 @@ def arg_parse():
         if not args.extract_f0:
             args.output = os.path.join(dir, f'{basename}_by_{args.model}.wav')
         else:
-            args.output = os.path.join(dir, f'{basename}_f0.txt')
+            args.output = os.path.join(dir, f'{basename}_f0.csv')
         
     os.environ['index_root'] = os.path.join(os.getenv('weight_root'), args.model + '_index')
 
