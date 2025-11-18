@@ -108,7 +108,7 @@ def main():
     else:
         logdev = sys.stderr
     def slog(mes:str):
-        print(mes, file=logdev)
+        print(mes, file=logdev, flush=True)
     from dotenv import load_dotenv
     from scipy.io import wavfile
     from configs.config import Config

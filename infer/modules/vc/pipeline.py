@@ -354,6 +354,9 @@ class Pipeline(object):
                 traceback.print_exc()
         sid = torch.tensor(sid, device=self.device).unsqueeze(0).long()
         pitch, pitchf = None, None
+        count = 0
+        countmax = len(opt_ts) + 2
+        slog(f'{count+1}/{countmax}')
         if if_f0 == 1:
             pitch, pitchf = self.get_f0(
                 input_audio_path,
@@ -374,10 +377,8 @@ class Pipeline(object):
             pitchf = torch.tensor(pitchf, device=self.device).unsqueeze(0).float()
         t2 = ttime()
         times[1] += t2 - t1
-        count = 0
-        countmax = len(opt_ts)
         for t in opt_ts:
-            slog(f'{count+1}/{countmax+1}')
+            slog(f'{count+1}/{countmax}')
             count += 1
             t = t // self.window * self.window
             if if_f0 == 1:
@@ -415,7 +416,7 @@ class Pipeline(object):
                     )[self.t_pad_tgt : -self.t_pad_tgt]
                 )
             s = t
-        slog(f'{count+1}/{countmax+1}')
+        slog(f'{count+1}/{countmax}')
         if if_f0 == 1:
             audio_output.append(
                 self.vc(
