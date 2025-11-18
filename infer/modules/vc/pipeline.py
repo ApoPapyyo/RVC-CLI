@@ -357,6 +357,7 @@ class Pipeline(object):
         count = 0
         countmax = len(opt_ts) + 2
         slog(f'{count+1}/{countmax}')
+        count += 1
         if if_f0 == 1:
             pitch, pitchf = self.get_f0(
                 input_audio_path,
