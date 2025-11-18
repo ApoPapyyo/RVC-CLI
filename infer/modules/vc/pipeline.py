@@ -300,7 +300,8 @@ class Pipeline(object):
         version,
         protect,
         f0_file=None,
-        f0_extract=False
+        f0_extract=False,
+        slog=print
     ):
         if (
             file_index != ""
@@ -373,7 +374,11 @@ class Pipeline(object):
             pitchf = torch.tensor(pitchf, device=self.device).unsqueeze(0).float()
         t2 = ttime()
         times[1] += t2 - t1
+        count = 0
+        countmax = len(opt_ts)
         for t in opt_ts:
+            slog(f'{count+1}/{countmax}')
+            count += 1
             t = t // self.window * self.window
             if if_f0 == 1:
                 audio_output.append(
@@ -410,6 +415,7 @@ class Pipeline(object):
                     )[self.t_pad_tgt : -self.t_pad_tgt]
                 )
             s = t
+        slog(f'{count+1}/{countmax}')
         if if_f0 == 1:
             audio_output.append(
                 self.vc(

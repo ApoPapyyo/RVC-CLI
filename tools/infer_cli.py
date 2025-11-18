@@ -50,6 +50,7 @@ def arg_parse():
     parser.add_argument("-l", "--list-models", action='store_true', help='Show installed models')
     parser.add_argument("--dry-run", action='store_true', help='Do only argument check')
     parser.add_argument("-e", "--extract-f0", action='store_true', help='F0 extract mode')
+    parser.add_argument("--log-output", default='', type=str)
     if len(sys.argv) == 1:
         sys.argv.append('--help')
     args = parser.parse_args()
@@ -102,6 +103,12 @@ def arg_parse():
 def main():
     set_env()
     args = arg_parse()
+    if args.log_output != '':
+        logdev = open(args.log_output, "w")
+    else:
+        logdev = sys.stderr
+    def slog(mes:str):
+        print(mes, file=logdev)
     from dotenv import load_dotenv
     from scipy.io import wavfile
     from configs.config import Config
@@ -126,7 +133,8 @@ def main():
         args.resample_sr,
         args.rms_mix_rate,
         args.protect,
-        args.extract_f0
+        args.extract_f0,
+        slog
     )
     if not args.extract_f0:
         wavfile.write(args.output, wav_output[0], wav_output[1])
