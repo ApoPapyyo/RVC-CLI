@@ -377,7 +377,7 @@ class Pipeline(object):
         count = 0
         countmax = len(opt_ts)
         for t in opt_ts:
-            slog(f'{count+1}/{countmax}')
+            slog(f'{count+1}/{countmax+1}')
             count += 1
             t = t // self.window * self.window
             if if_f0 == 1:
@@ -415,7 +415,7 @@ class Pipeline(object):
                     )[self.t_pad_tgt : -self.t_pad_tgt]
                 )
             s = t
-        slog(f'{count}/{countmax}')
+        slog(f'{count+1}/{countmax+1}')
         if if_f0 == 1:
             audio_output.append(
                 self.vc(
